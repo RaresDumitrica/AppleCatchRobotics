@@ -200,22 +200,22 @@ void updateApplesFall ()
         displayScore();
 
       }
-      if (score ==  5 && increaseSpeed == 0)   // cresc nivelul dificultatii in functie de numarul de puncte
+      if (score == 5 && increaseSpeed == 0)   // cresc nivelul dificultatii in functie de numarul de puncte
       { // variabila increaseSpeed opreste primul mar dupa schimbarea vitezei sa cada foarte repede
         increaseSpeed = 1;
         timeBetweenApplesRegeneration -= 1500;
       }
-      if (score ==  15  && increaseSpeed == 1)
+      if (score == 15  && increaseSpeed == 1)
       {
         increaseSpeed = 2;
         timeBetweenApplesRegeneration /= 1.5;
       }
-      if (score ==  30 && increaseSpeed == 2)
+      if (score == 30 && increaseSpeed == 2)
       {
         increaseSpeed = 3;
         timeBetweenApplesRegeneration /= 2;
       }
-      if (score ==  45 && increaseSpeed == 3)
+      if (score == 45 && increaseSpeed == 3)
       {
         increaseSpeed = 4;
         timeBetweenApplesRegeneration /= 2;
