@@ -5,9 +5,10 @@
 
 #define JOYSTICK_Y A0
 #define JOYSTICK_BUTTON 13
-#define THRESHOLD_JOYSTICK_MINIM 340
-#define THRESHOLD_JOYSTICK_MAXIM 680
-
+#define THRESHOLD_JOYSTICK_MINIM 200
+#define THRESHOLD_JOYSTICK_MAXIM 800
+#define MAX_LENGTH_MATRIX 7   //
+#define MIN_LENGTH_MATRIX 0   //
 #define CLK_PIN 11
 #define MAX7219_1 12
 #define LOAD_PIN 10
@@ -24,31 +25,30 @@
 LedControl matrixDisplay = LedControl(MAX7219_1, CLK_PIN, LOAD_PIN, NR_DRIVER);
 LiquidCrystal lcd (RS, E, D4, D5, D6, D7);
 
-int playerPosition = 4; // pozitia din centru a cosului
+int playerPosition = 4; // the middle point of the basket
 int score = 0;
 int highScore;
 int joyStickButtonState;
-int intervalUpdateScreen = 230;
-int timeBetweenApplesRegeneration = 3000; // timp intre regenerarea merelor / timpul intre care incep sa cada merele
-bool gameSetup = 1; // variabila pentru meniul jocului
+int intervalUpdateScreen = 200;
+int timeBetweenApplesRegeneration = 3000; // time between the fall of an apple
+bool gameSetup = 1; // variable for the game menu
 unsigned long lastUpdateScreen = 0;
-unsigned long lastApplesGeneration = 0; //ultima updatare a generarii merelor
-int increaseSpeed = 0; // varibila de verifica pentru marirea vitezei de generare a merelor, altfel ar cadea un mar foarte repede la schimbare
-//int configuration = 0;
-
-int applesMatrix[][8] = // matrice goala pe care retinem merele
+unsigned long lastApplesGeneration = 0; // the last uptate of the apple generation
+int increaseSpeed = 0; // varibila de verifica pentru marirea vitezei de generare a merelor, altfel ar cadea un mar foarte repede la schimbare variable
+// variable that verifies the speed change of the falling apples (without it after a speed change an apple would fall too fast)
+int applesMatrix[][8] = // empty 8x8 matrix for the falling apples
 {
-  {0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0}
+  {0, 0, 0, 0, 0, 0, 0, 0},
+  {0, 0, 0, 0, 0, 0, 0, 0},
+  {0, 0, 0, 0, 0, 0, 0, 0},
+  {0, 0, 0, 0, 0, 0, 0, 0},
+  {0, 0, 0, 0, 0, 0, 0, 0},
+  {0, 0, 0, 0, 0, 0, 0, 0},
+  {0, 0, 0, 0, 0, 0, 0, 0},
+  {0, 0, 0, 0, 0, 0, 0, 0}
 };
 
-int sadFace[][8] = // matricea celei mai urate fete triste
+int sadFace[][8] = // ugliest sad face ever
 {
   {1, 1, 1, 1, 1, 1, 1, 1},
   {1, 0, 0, 0, 0, 0, 0, 1},
@@ -63,7 +63,7 @@ int sadFace[][8] = // matricea celei mai urate fete triste
 void setup()
 {
   matrixDisplay.shutdown(0, false);
-  matrixDisplay.setIntensity(0, 15); // intensitatea matricii
+  matrixDisplay.setIntensity(0, 15); // set the matrix intensity [between 1 and 15]
   matrixDisplay.clearDisplay(0);
 
   pinMode(JOYSTICK_Y, INPUT);
@@ -71,25 +71,22 @@ void setup()
 
   lcd.begin (16, 2);
   lcd.clear();
-  lcd.setCursor (1, 0);
+  lcd.setCursor (1, 0); // set the lcd cursor's collum and row
 
 
-  pinMode(JOYSTICK_BUTTON, INPUT_PULLUP); // setat buttonul ca input default pe 1
+  pinMode(JOYSTICK_BUTTON, INPUT_PULLUP); // sets button to be 1/HIGH/ON by default
 
   pinMode(LCD_ARDUINO_PIN, OUTPUT);
   analogWrite(LCD_ARDUINO_PIN, 90);
 
-  randomSeed(analogRead(A5)); // seed-ul pentru functia random care v-a fi dat de zgomotul de pe pinul analog A5
-  //EEPROM_readAnything(0, configuration);
-  Serial.begin(9600);
-
+  randomSeed(analogRead(A5)); // seed for random function. it takes as input the noise from the analog pin A5
   startGame();
 
 }
 
 void loop()
 {
-  joyStickButtonState = digitalRead(JOYSTICK_BUTTON); // prin apasarea butonului se trece de la meniul de intrare la joc
+  joyStickButtonState = digitalRead(JOYSTICK_BUTTON); // by pressing the button you switch from the start menu to the actual game
   if (gameSetup == 1)
   {
     if (joyStickButtonState == 0)
@@ -100,7 +97,7 @@ void loop()
   }
   if (gameSetup == 0)
   {
-    if ((millis() - lastUpdateScreen) >= intervalUpdateScreen) //functia de delay cu millis
+    if ((millis() - lastUpdateScreen) >= intervalUpdateScreen) //delay function using millis
     {
       lastUpdateScreen = millis();
       updatePlayerPosition();
@@ -116,41 +113,39 @@ void loop()
 
 }
 
-void drawPlayer(int middlePoint)  // functia de desenare a jucatorului
+void drawPlayer(int middlePoint)  // the function that draws the player
 {
-  //x e punctul din mijloc al jucatorului
-
-  matrixDisplay.setLed(0, middlePoint, 7, 1);
-  matrixDisplay.setLed(0, middlePoint - 1, 7, 1);
-  matrixDisplay.setLed(0, middlePoint + 1, 7, 1);
-  matrixDisplay.setLed(0, middlePoint - 1, 6, 1);
-  matrixDisplay.setLed(0, middlePoint + 1, 6, 1);
+  matrixDisplay.setLed(MIN_LENGTH_MATRIX, middlePoint, MAX_LENGTH_MATRIX, 1); //AAAAAAAAAAAAAAAIIIIIIIIIIIIIIICCCCCCCCCCCCCCCCCCCIIIIIIIIIIIIIIIIIII
+  matrixDisplay.setLed(MIN_LENGTH_MATRIX, middlePoint - 1, MAX_LENGTH_MATRIX, 1);
+  matrixDisplay.setLed(MIN_LENGTH_MATRIX, middlePoint + 1, MAX_LENGTH_MATRIX, 1);
+  matrixDisplay.setLed(MIN_LENGTH_MATRIX, middlePoint - 1, MAX_LENGTH_MATRIX, 1);
+  matrixDisplay.setLed(MIN_LENGTH_MATRIX, middlePoint + 1, MAX_LENGTH_MATRIX, 1);
 }
 
-void updatePlayerPosition() //verifica daca joystick-ul trece de prag si ajunge in margine si muta jucatorul
+void updatePlayerPosition() // the function verifies if the joystick gets over the threshold and and moves it to the MARGINE of the matrix
 {
   int xJoyStick = analogRead(JOYSTICK_Y);
 
   if (xJoyStick > THRESHOLD_JOYSTICK_MAXIM)
   {
-    if (playerPosition > 1)
+    if (playerPosition > MIN_LENGTH_MATRIX + 1 )
     {
       playerPosition--;
     }
   }
   else if (xJoyStick < THRESHOLD_JOYSTICK_MINIM)
   {
-    if (playerPosition < 6)
+    if (playerPosition < MAX_LENGTH_MATRIX - 1)
     {
       playerPosition++;
     }
   }
 }
 
-void drawApples()  // functia de desenare a matricei
+void drawApples()  // the function that draws the matrix
 {
-  for (int i = 0; i < 8; i++)
-    for (int j = 0; j < 8; j++)
+  for (int i = MIN_LENGTH_MATRIX; i <= MAX_LENGTH_MATRIX; i++)
+    for (int j = MIN_LENGTH_MATRIX; j <= MAX_LENGTH_MATRIX; j++)
     {
       if (applesMatrix[i][j] == 1)
       {
@@ -160,22 +155,22 @@ void drawApples()  // functia de desenare a matricei
     }
 }
 
-void generateApplesFall (int level) //functia de generare a merelor pe matrice
+void generateApplesFall (int level) //function that generates the apples on the matrix
 {
   if (millis() - lastApplesGeneration >= timeBetweenApplesRegeneration)
   {
     lastApplesGeneration = millis();
-    long randomPosition = random(0, 8); // generam numar random
+    long randomPosition = random(MIN_LENGTH_MATRIX , MAX_LENGTH_MATRIX + 1); // generate a random number
 
-    applesMatrix[0][randomPosition] = 1; // punem pe prima linie un mar la pozitia generata random
+    applesMatrix[MIN_LENGTH_MATRIX][randomPosition] = 1; // put an apple on the first line on the random position that was previously generate
   }
 
 }
 
 void updateApplesFall ()
 {
-  for (int i = 7; i > 0; i--) // mergem pe linii de jos in sus si copiem linia precedenta
-    for (int j = 0; j <= 7; j++)
+  for (int i = MAX_LENGTH_MATRIX; i > MIN_LENGTH_MATRIX; i--) // mergem pe linii de jos in sus si copiem linia precedenta // we go through the the collums from the bottom to the top copying the last line
+    for (int j = MIN_LENGTH_MATRIX; j <= MAX_LENGTH_MATRIX; j++)
     {
       applesMatrix[i][j] = applesMatrix[i - 1][j];
       int x = playerPosition; // initializez pozitia player-ului intr-o variabila
@@ -218,79 +213,42 @@ void updateApplesFall ()
       if (score == 45 && increaseSpeed == 3)
       {
         increaseSpeed = 4;
-        timeBetweenApplesRegeneration /= 2;
+        timeBetweenApplesRegeneration /= 1.3;
       }
-      for (int rowX = 0; rowX <= 7; rowX++) //Verific daca marul ajunge pe ultima linie fara sa aiba contact cu punctul din mijloc al player-ului, iar in caz afirmativ se incheie jocul
+      for (int rowX = MIN_LENGTH_MATRIX ; rowX <= MAX_LENGTH_MATRIX ; rowX++) // verify if the apple reaches the last line without touching the middle point of the player [if that happens the game ends]
       {
         if (applesMatrix[7][rowX] == 1)
         {
           finishGame();
           displayScore();
-          applesMatrix[7][rowX] = 0; //ar ramane un mar generat random la fiecare reset de joc
-          for (int i = 0; i < 8; i++)
+          applesMatrix[7][rowX] = 0; //delete the apple matrix [as so the apple that made you lose the game will not remain on the matrix and make you lose the game again]
+          for (int i = MIN_LENGTH_MATRIX ; i <= MAX_LENGTH_MATRIX; i++)
             for (int j = 0; j < 8; j++)
             {
               applesMatrix[i][j] = 0;
             }
         }
       }
-
-      /* else if (applesMatrix[7][0] == 1)  // versiunea cruda, fara for
-         {
-           score = 0;
-         }
-         else if (applesMatrix[7][1] == 1)
-         {
-           score = 0;
-         }
-         else if (applesMatrix[7][2] == 1)
-         {
-           score = 0;
-         }
-         else if (applesMatrix[7][2] == 1)
-         {
-           score = 0;
-         }
-         else if (applesMatrix[7][3] == 1)
-         {
-           score = 0;
-         }
-         else if (applesMatrix[7][4] == 1)
-         {
-           score = 0;
-         }
-         else if (applesMatrix[7][5] == 1)
-         {
-           score = 0;
-         }
-         else if (applesMatrix[7][6] == 1)
-         {
-           score = 0;
-         }
-         else if (applesMatrix[7][7] == 1)
-         {
-           score = 0;
-         }*/
     }
-  for (int i = 0; i <= 7; i++)  // stergem merele de pe linia 0;
+  for (int i = MIN_LENGTH_MATRIX; i <= MAX_LENGTH_MATRIX; i++)  //delete the apples from the line 0;
   {
     applesMatrix[0][i] = 0;
   }
 
 }
 
-void finishGame()  // terminam jocul si afisam fata trista
+void finishGame // ends the game and shows the ugly sad face
 {
   matrixDisplay.clearDisplay(0);
-  for (int i = 0; i < 8; i++)
-    for (int j = 0; j < 8; j++)
+  for (int i = MIN_LENGTH_MATRIX; i <= MAX_LENGTH_MATRIX; i++)
+    for (int j = MIN_LENGTH_MATRIX; j <= MAX_LENGTH_MATRIX; j++)
     {
       if (sadFace[i][j] == 1)
       {
         matrixDisplay.setLed (0, j, i, 1);
       }
     }
-  // redefinim varibilele care se modifica cu valorile initiale
+  // redefine the start variables so the game wont start from the level you lost on [if i think better it could be a cool checkpoint mechanic (inner thoughts)]
   gameSetup = 1;
   playerPosition = 4;
   score = 0;
@@ -303,8 +261,8 @@ void finishGame()  // terminam jocul si afisam fata trista
 }
 void startGame()
 {
-  for (int i = 0; i < 8; i++)
-    for (int j = 0; j < 8; j++)
+  for (int i = MIN_LENGTH_MATRIX; i <= MAX_LENGTH_MATRIX; i++)
+    for (int j = MIN_LENGTH_MATRIX; j <= MAX_LENGTH_MATRIX; j++)
     {
       applesMatrix[i][j] = 0;
     }
@@ -316,7 +274,7 @@ void startGame()
   lcd.print ("Prees the button");
 }
 
-void displayScore() //functia pentru tinerea scorului in timp real
+void displayScore() // displays score in real time
 {
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -325,19 +283,19 @@ void displayScore() //functia pentru tinerea scorului in timp real
   itoa(score, conversionVariable, 10);
   strcat(firstPrintline, conversionVariable);
   lcd.print(firstPrintline);
-  lcd.setCursor(0, 1);
-  char secondPrintline[30] = "Highscore: ";
-  char secondSonversionVariable[3];
-  if (score > highScore)
-  {
+  /*lcd.setCursor(0, 1);
+    char secondPrintline[30] = "Highscore: ";
+    char secondSonversionVariable[3];
+    if (score > highScore)
+    {
     highScore = score;
-  }
-  itoa(highScore, secondSonversionVariable, 10);
-  strcat(secondPrintline, secondSonversionVariable);
-  lcd.print(secondPrintline);
+    }
+    itoa(highScore, secondSonversionVariable, 10);
+    strcat(secondPrintline, secondSonversionVariable);
+    lcd.print(secondPrintline);*/
 }
 
-void displayHighScore()
+void displayHighScore() // displays highscore and stores it in the EEPROM memory
 {
   lcd.setCursor(0, 1);
   lcd.print("HighScore: ");
