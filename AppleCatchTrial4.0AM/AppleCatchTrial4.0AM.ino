@@ -34,7 +34,7 @@ int timeBetweenApplesRegeneration = 3000; // time between the fall of an apple
 bool gameSetup = 1; // variable for the game menu
 unsigned long lastUpdateScreen = 0;
 unsigned long lastApplesGeneration = 0; // the last uptate of the apple generation
-int increaseSpeed = 0; // varibila de verifica pentru marirea vitezei de generare a merelor, altfel ar cadea un mar foarte repede la schimbare variable
+int increaseSpeed = 0; // variabile that cheks the increase of the speed, without it an apple would fall too fast
 // variable that verifies the speed change of the falling apples (without it after a speed change an apple would fall too fast)
 int applesMatrix[][8] = // empty 8x8 matrix for the falling apples
 {
@@ -169,12 +169,12 @@ void generateApplesFall (int level) //function that generates the apples on the 
 
 void updateApplesFall ()
 {
-  for (int i = MAX_LENGTH_MATRIX; i > MIN_LENGTH_MATRIX; i--) // mergem pe linii de jos in sus si copiem linia precedenta // we go through the the collums from the bottom to the top copying the last line
+  for (int i = MAX_LENGTH_MATRIX; i > MIN_LENGTH_MATRIX; i--) // we go through the the collums from the bottom to the top copying the last line
     for (int j = MIN_LENGTH_MATRIX; j <= MAX_LENGTH_MATRIX; j++)
     {
       applesMatrix[i][j] = applesMatrix[i - 1][j];
-      int x = playerPosition; // initializez pozitia player-ului intr-o variabila
-      if (applesMatrix[6][x - 1] == 1) // verific coliziunea cu player-ul, cresc scorul in caz afirmativ si sterg punctul care a atins player-ul pentru a nu ajunge pe ultima linie
+      int x = playerPosition; // retain the player position into a variable
+      if (applesMatrix[6][x - 1] == 1) // check the colision with the player and increase the score, also delete the apple that touched the player
       {
         score++ ;
         applesMatrix[6][x - 1] = 0;
@@ -195,8 +195,8 @@ void updateApplesFall ()
         displayScore();
 
       }
-      if (score == 5 && increaseSpeed == 0)   // cresc nivelul dificultatii in functie de numarul de puncte
-      { // variabila increaseSpeed opreste primul mar dupa schimbarea vitezei sa cada foarte repede
+      if (score == 5 && increaseSpeed == 0) // increase the diffuclty 
+      {
         increaseSpeed = 1;
         timeBetweenApplesRegeneration -= 1500;
       }
