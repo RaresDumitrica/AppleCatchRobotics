@@ -26,4 +26,3 @@ https://www.youtube.com/watch?v=zBvVr0N1g4Y
 - A lot of google sites like: 
   - http://playground.arduino.cc/Code/EEPROMWriteAnything?fbclid=IwAR0jM-IM-S6MWyHDIg-I03b6NhZQQhtqvAx0Y6zIX5n1xOEk_g39VHFFm-s
   - https://xantorohara.github.io/led-matrix-editor/?fbclid=IwAR2ELhEEfdILjMecc1LII-YVYol5h1dnvcve9Y8ZA0-SxgJaalpNqnbpZ5g#06083c4242423c00|0000364944447800|070a1222e7a5e700|00040606067e3c00|3c7ee7dbdbe77e3c|003c664242663c00|3c1818242424243c|0018242442423c00|001824245a5a3c00|081828080808083c|3c0404043c20203c|3c04042c1404043c|040c14247e040404
-  -
